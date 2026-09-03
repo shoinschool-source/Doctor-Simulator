@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>診断室 ～ English Diagnosis ～</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background-color: #111;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: "MS Gothic", "Hiragino Kaku Gothic Pro", Osaka, monospace;
+      color: #fff;
+    }
+
+    .game-screen {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      height: 650px;
+      background: linear-gradient(180deg, #b8d0e8 0%, #e8f0f8 50%, #a0b8d0 100%);
+      border: 6px solid #4a3b52;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hud-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 20px;
+      background: rgba(20, 20, 40, 0.85);
+      border-bottom: 2px solid #8a7b93;
+      font-weight: bold;
+      font-size: 14px;
+      color: #ffd700;
+      text-shadow: 1px 1px 0 #000;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .stage {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .character-avatar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .character-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .popup-box {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: rgba(15, 23, 42, 0.95);
+      border: 4px solid #ffd700;
+      border-radius: 12px;
+      padding: 20px 40px;
+      text-align: center;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(0,0,0,0.8);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease-in-out;
+      pointer-events: none;
+    }
+
+    .popup-box.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .popup-title {
+      color: #4ade80;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 0px #000;
+    }
+
+    .popup-points {
+      color: #ffd700;
+      font-size: 32px;
+      font-weight: bold;
+      text-shadow: 2px 2px 0px #000;
+    }
+
+    .game-over-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 25, 0.95);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
+    }
+
+    .game-over-screen.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .game-over-title {
+      font-size: 32px;
+      color: #ffd700;
+      text-shadow: 2px 2px 0 #000;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+    }
+
+    .final-score-text {
+      font-size: 24px;
+      color: #fff;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    .final-score-val {
+      font-size: 48px;
+      color: #4ade80;
+      font-weight: bold;
+      text-shadow: 3px 3px 0 #000;
+      margin-bottom: 30px;
+    }
+
+    .restart-btn {
+      background: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%);
+      border: 2px solid #ffd700;
+      color: #fff;
+      padding: 12px 30px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      transition: transform 0.15s ease;
+      margin-right: 10px;
+    }
+
+    .restart-btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
+    }
+
+    .home-btn {
+      background: linear-gradient(180deg, #374151 100%, #1f2937 100%);
+      border: 2px solid #9ca3af;
+    }
+
+    .dialogue-container {
+      position: relative;
+      margin: 10px 15px;
+      min-height: 90px;
+      background: rgba(15, 15, 35, 0.9);
+      border: 3px solid #d4af37;
+      border-radius: 6px;
+      padding: 12px 20px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+      flex-shrink: 0;
+      z-index: 5;
+    }
+
+    .name-box {
+      position: absolute;
+      top: -16px;
+      left: 15px;
+      background: #8b0000;
+      border: 2px solid #d4af37;
+      color: #ffffff;
+      padding: 1px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 4px;
+      box-shadow: 2px 2px 0px #000;
+    }
+
+    .dialogue-text {
+      font-size: 16px;
+      line-height: 1.4;
+      color: #ffffff;
+      text-shadow: 1px 1px 2px #000;
+      margin-top: 4px;
+      white-space: pre-line;
+    }
+
+    .choice-container {
+      background: rgba(10, 10, 25, 0.95);
+      border-top: 2px solid #4a3b52;
+      padding: 10px 15px 15px 15px;
+      flex-shrink: 0;
+      z-index: 5;
+    }
+
+    .choice-title {
+      font-size: 12px;
+      color: #ffd700;
+      margin-bottom: 8px;
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .choice-btn {
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+      border: 1px solid #6b7280;
+      color: #f3f4f6;
+      padding: 6px 4px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+      line-height: 1.2;
+    }
+
+    .choice-btn-sub {
+      display: block;
+      font-size: 10px;
+      color: #9ca3af;
+      font-weight: normal;
+      margin-top: 2px;
+    }
+
+    .choice-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%);
+      border-color: #ffd700;
+      color: #fff;
+    }
+
+    .choice-btn:hover:not(:disabled) .choice-btn-sub {
+      color: #fef08a;
+    }
+
+    .choice-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      background: #111827;
+      border-color: #374151;
+      color: #4b5563;
+    }
+
+    .choice-btn:disabled .choice-btn-sub {
+      color: #374151;
+    }
+
+    @media (max-width: 600px) {
+      .choice-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-screen">
+  <div class="hud-bar">
+    <span>LOCATION: 診察室 (Clinic)</span>
+    <span id="patientTracker">PATIENT: 1/10</span>
+    <span id="scoreDisplay">SCORE: 0</span>
+  </div>
+
+  <div class="popup-box" id="scorePopup">
+    <div class="popup-title">【 正解 / CORRECT! 】</div>
+    <div class="popup-points" id="popupPoints">+10 PTS</div>
+  </div>
+
+  <div class="game-over-screen" id="gameOverScreen">
+    <div class="game-over-title">【 診察終了 / GAME OVER 】</div>
+    <div class="final-score-text">FINAL SCORE</div>
+    <div class="final-score-val" id="finalScoreVal">0 PTS</div>
+    <div>
+      <button class="restart-btn" onclick="initGame()">PLAY AGAIN</button>
+      <button class="restart-btn home-btn" onclick="goToTitle()">TITLE</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="character-avatar">
+      <img id="patientImage" src="" alt="Patient Portrait">
+    </div>
+  </div>
+
+  <div class="dialogue-container">
+    <div class="name-box" id="nameBox">患者</div>
+    <div class="dialogue-text" id="dialogueText">Loading...</div>
+  </div>
+
+  <div class="choice-container">
+    <div class="choice-title">【 診断を選択してください / SELECT DIAGNOSIS 】</div>
+    <div class="choice-grid" id="choiceGrid"></div>
+  </div>
+</div>
+
+<script>
+  const scenarios = [
+    { symptom: "My head hurts and I feel hot...", diagnosis: "Fever", diagnosisJa: "発熱" },
+    { symptom: "I have a cough and a runny nose...", diagnosis: "Cold", diagnosisJa: "風邪" },
+    { symptom: "My stomach hurts after lunch...", diagnosis: "Stomachache", diagnosisJa: "腹痛" },
+    { symptom: "My eyes are red and itchy...", diagnosis: "Allergy", diagnosisJa: "アレルギー" },
+    { symptom: "My throat hurts when I talk...", diagnosis: "Sore Throat", diagnosisJa: "喉の痛み" },
+    { symptom: "I fell down and my head hurts...", diagnosis: "Headache", diagnosisJa: "頭痛" },
+    { symptom: "My tooth hurts when I eat...", diagnosis: "Toothache", diagnosisJa: "歯痛" },
+    { symptom: "My leg hurts and I cannot run...", diagnosis: "Injury", diagnosisJa: "怪我" },
+    { symptom: "I feel dizzy and very tired...", diagnosis: "Fatigue", diagnosisJa: "疲労" },
+    { symptom: "My skin is red and hot from the sun...", diagnosis: "Sunburn", diagnosisJa: "日焼け" }
+  ];
+
+  let score = 0;
+  let currentScenario = null;
+  let isProcessing = false;
+  let currentPotentialPoints = 10;
+  let remainingScenarios = [];
+  let patientCount = 0;
+  let solvedDiagnoses = new Set();
+
+  const dialogueText = document.getElementById("dialogueText");
+  const nameBox = document.getElementById("nameBox");
+  const scoreDisplay = document.getElementById("scoreDisplay");
+  const patientTracker = document.getElementById("patientTracker");
+  const patientImage = document.getElementById("patientImage");
+  const choiceGrid = document.getElementById("choiceGrid");
+  const scorePopup = document.getElementById("scorePopup");
+  const popupPoints = document.getElementById("popupPoints");
+  const gameOverScreen = document.getElementById("gameOverScreen");
+  const finalScoreVal = document.getElementById("finalScoreVal");
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function renderChoices() {
+    choiceGrid.innerHTML = "";
+    scenarios.forEach(scen => {
+      const btn = document.createElement("button");
+      btn.className = "choice-btn";
+      btn.innerHTML = `${scen.diagnosis}<span class="choice-btn-sub">${scen.diagnosisJa}</span>`;
+      btn.onclick = (e) => checkDiagnosis(scen.diagnosis, e.currentTarget);
+      
+      if (solvedDiagnoses.has(scen.diagnosis)) {
+        btn.disabled = true;
+      }
+
+      choiceGrid.appendChild(btn);
+    });
+  }
+
+  function initGame() {
+    score = 0;
+    patientCount = 0;
+    solvedDiagnoses.clear();
+    scoreDisplay.textContent = "SCORE: 0";
+    
+    const availableAvatars = shuffleArray([
+      "char_1", "char_2", "char_3", "char_4", "char_5",
+      "char_6", "char_7", "char_8", "char_9", "char_10"
+    ]);
+
+    remainingScenarios = shuffleArray([...scenarios]).map((scen, idx) => ({
+      ...scen,
+      avatarId: availableAvatars[idx]
+    }));
+    
+    gameOverScreen.classList.remove("show");
+    renderChoices();
+    nextPatient();
+  }
+
+  function toggleButtons(enable) {
+    const buttons = choiceGrid.querySelectorAll("button");
+    buttons.forEach((btn, index) => {
+      const diagnosisName = scenarios[index].diagnosis;
+      if (solvedDiagnoses.has(diagnosisName)) {
+        btn.disabled = true;
+      } else {
+        btn.disabled = !enable;
+      }
+    });
+  }
+
+  function nextPatient() {
+    if (remainingScenarios.length === 0) {
+      endGame();
+      return;
+    }
+
+    isProcessing = false;
+    currentPotentialPoints = 10;
+    patientCount++;
+    patientTracker.textContent = `PATIENT: ${patientCount}/10`;
+    scorePopup.classList.remove("show");
+    
+    currentScenario = remainingScenarios.pop();
+
+    nameBox.textContent = "患者";
+    dialogueText.textContent = `"${currentScenario.symptom}"`;
+    
+    patientImage.src = `patients/${currentScenario.avatarId}.png`;
+    toggleButtons(true);
+  }
+
+  function checkDiagnosis(selected, clickedBtn) {
+    if (isProcessing) return;
+
+    if (selected === currentScenario.diagnosis) {
+      isProcessing = true;
+      toggleButtons(false);
+
+      solvedDiagnoses.add(currentScenario.diagnosis);
+      clickedBtn.disabled = true;
+
+      score += currentPotentialPoints;
+      scoreDisplay.textContent = `SCORE: ${score}`;
+      dialogueText.textContent = `【正解】\n「ありがとう、先生！(Thank you, Doctor!)」`;
+
+      popupPoints.textContent = `+${currentPotentialPoints} PTS`;
+      scorePopup.classList.add("show");
+
+      setTimeout(nextPatient, 3000);
+    } else {
+      clickedBtn.disabled = true;
+
+      if (currentPotentialPoints > 1) {
+        currentPotentialPoints--;
+      }
+
+      dialogueText.textContent = `【不正解】\n「違います… もう一度考えてみてください！」\n(Worth ${currentPotentialPoints} pts now)`;
+    }
+  }
+
+  function endGame() {
+    finalScoreVal.textContent = `${score} PTS`;
+    gameOverScreen.classList.add("show");
+  }
+
+  function goToTitle() {
+    window.location.href = 'index.html';
+  }
+
+  window.onload = function() {
+    initGame();
+  };
+</script>
+
+</body>
+</html>
