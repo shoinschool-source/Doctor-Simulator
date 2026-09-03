@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>診療所メモリーズ ～ English Diagnosis ～</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background-color: #111;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: "MS Gothic", "Hiragino Kaku Gothic Pro", Osaka, monospace;
+      color: #fff;
+    }
+
+    /* 90s Game Screen Frame */
+    .game-screen {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      height: 650px;
+      background: linear-gradient(180deg, #b8d0e8 0%, #e8f0f8 50%, #a0b8d0 100%);
+      border: 6px solid #4a3b52;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top HUD / Status Bar */
+    .hud-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 20px;
+      background: rgba(20, 20, 40, 0.85);
+      border-bottom: 2px solid #8a7b93;
+      font-weight: bold;
+      font-size: 14px;
+      color: #ffd700;
+      text-shadow: 1px 1px 0 #000;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    /* Main Stage for Character Portrait */
+    .stage {
+      flex: 1;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+
+    .character-avatar {
+      width: 280px;
+      height: 320px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));
+    }
+
+    .character-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* 90s Dialogue Box Area */
+    .dialogue-container {
+      position: relative;
+      margin: 0 15px 10px 15px;
+      min-height: 90px;
+      background: rgba(15, 15, 35, 0.9);
+      border: 3px solid #d4af37;
+      border-radius: 6px;
+      padding: 12px 20px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+      flex-shrink: 0;
+    }
+
+    /* Speaker Name Tag Box */
+    .name-box {
+      position: absolute;
+      top: -16px;
+      left: 15px;
+      background: #8b0000;
+      border: 2px solid #d4af37;
+      color: #ffffff;
+      padding: 1px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 4px;
+      box-shadow: 2px 2px 0px #000;
+    }
+
+    .dialogue-text {
+      font-size: 16px;
+      line-height: 1.4;
+      color: #ffffff;
+      text-shadow: 1px 1px 2px #000;
+      margin-top: 4px;
+      white-space: pre-line;
+    }
+
+    /* Choice Options Container */
+    .choice-container {
+      background: rgba(10, 10, 25, 0.95);
+      border-top: 2px solid #4a3b52;
+      padding: 10px 15px 15px 15px;
+      flex-shrink: 0;
+    }
+
+    .choice-title {
+      font-size: 12px;
+      color: #ffd700;
+      margin-bottom: 8px;
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .choice-btn {
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+      border: 1px solid #6b7280;
+      color: #f3f4f6;
+      padding: 8px 4px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .choice-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%);
+      border-color: #ffd700;
+      color: #fff;
+    }
+
+    .choice-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 600px) {
+      .choice-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-screen">
+  <!-- Top Status HUD -->
+  <div class="hud-bar">
+    <span>LOCATION: 診察室 (Clinic)</span>
+    <span id="scoreDisplay">SCORE: 0</span>
+  </div>
+
+  <!-- Character Stage -->
+  <div class="stage">
+    <div class="character-avatar">
+      <img id="patientImage" src="" alt="Patient Portrait">
+    </div>
+  </div>
+
+  <!-- Dialogue Window -->
+  <div class="dialogue-container">
+    <div class="name-box" id="nameBox">患者</div>
+    <div class="dialogue-text" id="dialogueText">Loading...</div>
+  </div>
+
+  <!-- Choice Menu -->
+  <div class="choice-container">
+    <div class="choice-title">【 診断を選択してください / SELECT DIAGNOSIS 】</div>
+    <div class="choice-grid" id="choiceGrid"></div>
+  </div>
+</div>
+
+<script>
+  // 10 Game Scenarios mapped to patients/char_1.png through char_10.png
+  const scenarios = [
+    { id: "char_1", symptom: "My head hurts and I feel hot...", diagnosis: "Fever", name: "男子高校生 (High Schooler)" },
+    { id: "char_2", symptom: "I have a cough and a runny nose...", diagnosis: "Cold", name: "女性会社員 (Office Worker)" },
+    { id: "char_3", symptom: "My stomach hurts after lunch...", diagnosis: "Stomachache", name: "サラリーマン (Businessman)" },
+    { id: "char_4", symptom: "My eyes are red and itchy...", diagnosis: "Allergy", name: "女子中学生 (Junior High Girl)" },
+    { id: "char_5", symptom: "My throat hurts when I talk...", diagnosis: "Sore Throat", name: "おじいさん (Elderly Man)" },
+    { id: "char_6", symptom: "I fell down and my head hurts...", diagnosis: "Headache", name: "青年 (Young Man)" },
+    { id: "char_7", symptom: "My tooth hurts when I eat...", diagnosis: "Toothache", name: "男の子 (Young Boy)" },
+    { id: "char_8", symptom: "My leg hurts and I cannot run...", diagnosis: "Injury", name: "女性アスリート (Athlete)" },
+    { id: "char_9", symptom: "I feel dizzy and very tired...", diagnosis: "Fatigue", name: "おばあさん (Elderly Woman)" },
+    { id: "char_10", symptom: "My skin is red and hot from the sun...", diagnosis: "Sunburn", name: "旅行者 (Tourist)" }
+  ];
+
+  let score = 0;
+  let currentScenario = null;
+  let isProcessing = false;
+
+  const dialogueText = document.getElementById("dialogueText");
+  const nameBox = document.getElementById("nameBox");
+  const scoreDisplay = document.getElementById("scoreDisplay");
+  const patientImage = document.getElementById("patientImage");
+  const choiceGrid = document.getElementById("choiceGrid");
+
+  function initGame() {
+    renderChoices();
+    nextPatient();
+  }
+
+  function renderChoices() {
+    choiceGrid.innerHTML = "";
+    scenarios.forEach(scen => {
+      const btn = document.createElement("button");
+      btn.className = "choice-btn";
+      btn.textContent = scen.diagnosis;
+      btn.onclick = () => checkDiagnosis(scen.diagnosis);
+      choiceGrid.appendChild(btn);
+    });
+  }
+
+  function toggleButtons(enable) {
+    const buttons = choiceGrid.querySelectorAll("button");
+    buttons.forEach(btn => btn.disabled = !enable);
+  }
+
+  function nextPatient() {
+    isProcessing = false;
+    toggleButtons(true);
+
+    const randomIndex = Math.floor(Math.random() * scenarios.length);
+    currentScenario = scenarios[randomIndex];
+
+    nameBox.textContent = currentScenario.name;
+    dialogueText.textContent = `"${currentScenario.symptom}"`;
+    
+    // Sets image source to patients/char_1.png ... patients/char_10.png
+    patientImage.src = `patients/${currentScenario.id}.png`;
+  }
+
+  function checkDiagnosis(selected) {
+    if (isProcessing) return;
+    isProcessing = true;
+    toggleButtons(false);
+
+    if (selected === currentScenario.diagnosis) {
+      score += 10;
+      scoreDisplay.textContent = `SCORE: ${score}`;
+      dialogueText.textContent = `【正解】\n「ありがとう、先生！(Thank you, Doctor!)」 (+10 Points)`;
+    } else {
+      dialogueText.textContent = `【不正解】\n「えっ…？ 正しい診断は ${currentScenario.diagnosis} です…」`;
+    }
+
+    setTimeout(nextPatient, 2000);
+  }
+
+  window.onload = initGame;
+</script>
+
+</body>
+</html>
